@@ -1,19 +1,26 @@
 (function(angular, undefined) {
 	'use strict';
+
 	angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $q) {
 		/**
 		 * @class ActiveRecord
 		 * @constructor
 		 * @param {Object} [properties]  Initialize the record with these property values.
 		 */
-		var ActiveRecord = function ActiveRecord (properties) {
+		var ActiveRecord = function ActiveRecord(properties) {
 			this.$initialize.apply(this, arguments);
 		};
 		ActiveRecord.prototype = {
+
 			/**
 			 * @property {string}
 			 */
 			$idAttribute: 'id',
+
+			/**
+			 * @property {string}
+			 */
+			$urlRoot: null,
 
 			/**
 			 * Contructor logic
@@ -28,14 +35,26 @@
 					angular.extend(this, properties);
 				}
 			},
+
 			/**
 			 * (re)load data from the backend.
 			 * @param {Object} [options] sync options
 			 * @return $q.promise
 			 */
 			$fetch: function (options) {
-	      		return this.$sync('read', this, options);
+				var model = this;
+				var deferred = $q.defer();
+				this.$sync('read', this, options).then(function (response) {
+					if (typeof response.data === 'object') {
+						angular.extend(model, model.$parse(response.data, options));
+						deferred.resolve(model);
+					} else {
+						deferred.reject('Not a valid response type');
+					}
+				}, deferred.reject);
+				return deferred.promise;
 			},
+
 			/**
 			 * Save the record to the backend.
 			 * @param {Object} [values] Set these values before saving the record.
@@ -49,26 +68,34 @@
 				if (this[this.$idAttribute]) {
 					return this.$sync('update', this, options);
 				}
-				return this.$sync('create', this, options);
+				var model = this;
+				return this.$sync('create', this, options).then(function (response) {
+					if (angular.isObject(response.data)) {
+						angular.extend(model, model.$parse(response.data, options));
+					}
+					return model;
+				});
 			},
+
 			/**
 			 * Remove the record from the backend.
 			 * @param {Object} [options] sync options
 			 * @return $q.promise
 			 */
 			$destroy: function (options) {
-				return this.$sync('delete', this, options);	
+				return this.$sync('delete', this, options);
 			},
+
 			/**
-			 * 
+			 *
 			 */
 			$url: function() {
-	      		if (typeof this[this.$idAttribute] === 'undefined') {
-	      			return this.$urlRoot;
-	      		}
-	      		return this.$urlRoot + (this.$urlRoot.charAt(this.$urlRoot.length - 1) === '/' ? '' : '/') + encodeURIComponent(this[this.$idAttribute]);
-	      		
-	    	},
+				if (typeof this[this.$idAttribute] === 'undefined') {
+					return this.$urlRoot;
+				}
+				return this.$urlRoot + (this.$urlRoot.charAt(this.$urlRoot.length - 1) === '/' ? '' : '/') + encodeURIComponent(this[this.$idAttribute]);
+			},
+
 			/**
 			 * Process the data from the response and return the record-properties.
 			 * @param {Object} data  The data from the sync response.
@@ -78,16 +105,17 @@
 			$parse: function (data, options) {
 				return data;
 			},
+
 			/**
 			 * The counterpart to $parse.
-	    	 * Don't call this method directly, this method is called by JSON.stringify.
-	    	 * Override it to filter or cast the properties for use in json.
-	    	 */
-	    	toJSON: function () {
-	    		return this;
-	    	},
-	    	
-	    	/**
+			 * Don't call this method directly, this method is called by JSON.stringify.
+			 * Override it to filter or cast the properties for use in json.
+			 */
+			toJSON: function () {
+				return this;
+			},
+
+			/**
 			 * By default calls ActiveRecord.sync
 			 * Override to change the backend implementation on a per model bases.
 			 */
@@ -96,6 +124,11 @@
 			}
 		};
 
+		/**
+		 * Preform a CRUD operation on the backend.
+		 *
+		 * @return $q.promise
+		 */
 		ActiveRecord.sync = function (operation, model, options) {
 			if (typeof options === 'undefined') {
 				options = {};
@@ -115,34 +148,27 @@
 			if (operation === 'create' || operation === 'update') {
 				options.data = model;
 			}
-			var defer = $q.defer();
-			var request = $http(options);
-			return request.then(function (response) {
-				if (response.data) {
-					angular.extend(model, model.$parse(response.data, options));
-				}
-				return model;
-			});
+			return $http(options);
 		};
 
 		ActiveRecord.extend = function(protoProps, staticProps) {
-	    	var parent = this;
-	    	var child;
-	 
-		    if (protoProps && typeof protoProps.$constructor === 'function') {
-		      child = protoProps.$constructor;
-	    	} else {
-		      child = function () { return parent.apply(this, arguments); };
-		    }
-		    angular.extend(child, parent, staticProps);
-	    	var Surrogate = function () { this.$constructor = child; };
-	    	Surrogate.prototype = parent.prototype;
-	    	child.prototype = new Surrogate;
-		    if (protoProps) {
-		    	angular.extend(child.prototype, protoProps); 
-		    }
-		    child.__super__ = parent.prototype;
-	    	return child;
+			var parent = this;
+			var child;
+
+			if (protoProps && typeof protoProps.$constructor === 'function') {
+				child = protoProps.$constructor;
+			} else {
+				child = function () { return parent.apply(this, arguments); };
+			}
+			angular.extend(child, parent, staticProps);
+			var Surrogate = function () { this.$constructor = child; };
+			Surrogate.prototype = parent.prototype;
+			child.prototype = new Surrogate();
+			if (protoProps) {
+				angular.extend(child.prototype, protoProps);
+			}
+			child.__super__ = parent.prototype;
+			return child;
 		};
 
 		/**
@@ -158,6 +184,29 @@
 			return model.$fetch(options);
 		};
 
+		/**
+		 * Load a collection of records.
+		 *
+		 * @param {Object} [options]
+		 * @return $q.promise
+		 */
+		ActiveRecord.fetchAll = function (options) {
+			var ModelType = this;
+			var model = new ModelType();
+			var deferred = $q.defer();
+			model.$sync('read', model, options).then(function (response) {
+				if (angular.isArray(response.data)) {
+					var models = [];
+					angular.forEach(response.data, function (data) {
+						models.push(new ModelType(data));
+					});
+					deferred.resolve(models);
+				} else {
+					deferred.reject('Not a valid response, expecting an array');
+				}
+			}, deferred.reject);
+			return deferred.promise;
+		};
 		return ActiveRecord;
 	});
 })(window.angular);
