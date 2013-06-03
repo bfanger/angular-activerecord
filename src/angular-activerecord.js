@@ -90,11 +90,12 @@
 			 *
 			 */
 			$url: function() {
-				if (typeof this[this.$idAttribute] === 'undefined') {
-					return this.$urlRoot;
-				}
-				return this.$urlRoot + (this.$urlRoot.charAt(this.$urlRoot.length - 1) === '/' ? '' : '/') + encodeURIComponent(this[this.$idAttribute]);
-			},
+                            var url = angular.isFunction(this.$urlRoot) ? this.$urlRoot() : this.$urlRoot ;
+                            if (typeof this[this.$idAttribute] === 'undefined') {
+                                return url;
+                            }
+                            return url + (url.charAt(url.length - 1) === '/' ? '' : '/') + encodeURIComponent(this[this.$idAttribute]);
+                        },
 
 			/**
 			 * Process the data from the response and return the record-properties.
@@ -191,22 +192,23 @@
 		 * @return $q.promise
 		 */
 		ActiveRecord.fetchAll = function (options) {
-			var ModelType = this;
-			var model = new ModelType();
-			var deferred = $q.defer();
-			model.$sync('read', model, options).then(function (response) {
-				if (angular.isArray(response.data)) {
-					var models = [];
-					angular.forEach(response.data, function (data) {
-						models.push(new ModelType(data));
-					});
-					deferred.resolve(models);
-				} else {
-					deferred.reject('Not a valid response, expecting an array');
-				}
-			}, deferred.reject);
-			return deferred.promise;
-		};
+                        var ModelType = this;
+                        var model = new ModelType();
+                        var deferred = $q.defer();
+                        model.$sync('read', model, options).then(function (response) {
+                            var parsedData = model.$parse(response.data);
+                            if (angular.isArray(parsedData)) {
+                                var models = [];
+                                angular.forEach(parsedData, function (data) {
+                                    models.push(new ModelType(data));
+                                });
+                                deferred.resolve(models);
+                            } else {
+                                deferred.reject('Not a valid response, expecting an array');
+                            }
+                        }, deferred.reject);
+                        return deferred.promise;
+                    };
 		return ActiveRecord;
 	});
 })(window.angular);
