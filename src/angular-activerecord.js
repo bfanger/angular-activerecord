@@ -45,8 +45,9 @@
 				var model = this;
 				var deferred = $q.defer();
 				this.$sync('read', this, options).then(function (response) {
-					if (typeof response.data === 'object') {
-						angular.extend(model, model.$parse(response.data, options));
+					var data = model.$parse(response.data, options);
+					if (typeof data === 'object') {
+						angular.extend(model, data);
 						deferred.resolve(model);
 					} else {
 						deferred.reject('Not a valid response type');
@@ -90,10 +91,11 @@
 			 *
 			 */
 			$url: function() {
+				var urlRoot = angular.isFunction(this.$urlRoot) ? this.$urlRoot() : this.$urlRoot;
 				if (typeof this[this.$idAttribute] === 'undefined') {
-					return this.$urlRoot;
+					return urlRoot;
 				}
-				return this.$urlRoot + (this.$urlRoot.charAt(this.$urlRoot.length - 1) === '/' ? '' : '/') + encodeURIComponent(this[this.$idAttribute]);
+				return urlRoot + (urlRoot.charAt(urlRoot.length - 1) === '/' ? '' : '/') + encodeURIComponent(this[this.$idAttribute]);
 			},
 
 			/**
@@ -138,7 +140,7 @@
 					create: 'POST',
 					read: 'GET',
 					update: 'PUT',
-					delete: 'DELETE'
+					"delete": 'DELETE'
 				};
 				options.method = crudMapping[operation];
 			}
@@ -195,10 +197,11 @@
 			var model = new ModelType();
 			var deferred = $q.defer();
 			model.$sync('read', model, options).then(function (response) {
-				if (angular.isArray(response.data)) {
+				var data = model.$parse(response.data, options);
+				if (angular.isArray(data)) {
 					var models = [];
-					angular.forEach(response.data, function (data) {
-						models.push(new ModelType(data));
+					angular.forEach(data, function (item) {
+						models.push(new ModelType(item));
 					});
 					deferred.resolve(models);
 				} else {
