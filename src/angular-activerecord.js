@@ -95,6 +95,9 @@
 				if (typeof this[this.$idAttribute] === 'undefined') {
 					return urlRoot;
 				}
+				if (urlRoot === null) {
+					throw 'Implement this.$url() or specify this.$urlRoot';
+				}
 				return urlRoot + (urlRoot.charAt(urlRoot.length - 1) === '/' ? '' : '/') + encodeURIComponent(this[this.$idAttribute]);
 			},
 

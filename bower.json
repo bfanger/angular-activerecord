@@ -4,5 +4,10 @@
   "repository": {
     "type": "git",
     "url": "git://github.com/bfanger/angular-activerecord.git"
+  },
+  "devDependencies": {
+    "jasmine": "*",
+    "angular": "*",
+    "angular-mocks": "*"
   }
 }

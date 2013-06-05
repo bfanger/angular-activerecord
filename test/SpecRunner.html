@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Jasmine Spec Runner</title>
+
+		<link rel="stylesheet" type="text/css" href="../components/jasmine/lib/jasmine-core/jasmine.css">
+		<script src="../components/jasmine/lib/jasmine-core/jasmine.js"></script>
+		<script src="../components/jasmine/lib/jasmine-core/jasmine-html.js"></script>
+
+		<!-- include source files here... -->
+		<script src="../components/angular/angular.js"></script>
+		<script src="../components/angular-mocks/angular-mocks.js"></script>
+		<script src="../src/angular-activerecord.js"></script>
+
+		<!-- include spec files here... -->
+		<script type="text/javascript" src="ActiveRecordSpec.js"></script>
+
+		<script type="text/javascript">
+			(function() {
+				var jasmineEnv = jasmine.getEnv();
+				jasmineEnv.updateInterval = 1000;
+
+				var trivialReporter = new jasmine.TrivialReporter();
+				jasmineEnv.addReporter(trivialReporter);
+				jasmineEnv.specFilter = function(spec) {
+					return trivialReporter.specFilter(spec);
+				};
+				var currentWindowOnload = window.onload;
+				window.onload = function() {
+					if (currentWindowOnload) {
+						currentWindowOnload();
+					}
+					execJasmine();
+				};
+				function execJasmine() {
+					jasmineEnv.execute();
+				}
+			})();
+	</script>
+	</head>
+
+	<body></body>
+</html>
