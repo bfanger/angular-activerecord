@@ -1,0 +1,17 @@
+{
+	"name": "angular-activerecord",
+	"version": "0.1.0",
+	"description": "A Backbone.Model inspired modellayer for AngularJS",
+	"main": "src/angular-activerecord.js",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/bfanger/angular-activerecord.git"
+	},
+	"scripts": {
+		"test": "./node_modules/.bin/karma start --single-run --browsers PhantomJS"
+	},
+	"readmeFilename": "Readme.md",
+	"dependencies": {
+		"karma": "~0.8.5"
+	}
+}

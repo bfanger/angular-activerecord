@@ -1,42 +1,46 @@
 # ActiveRecord for AngularJS
 
-angular-activerecord is an Backbone.Model inspired modellayer for AngularJS.
+angular-activerecord is a [Backbone.Model](http://backbonejs.org/#Model) inspired modellayer for [AngularJS](http://angularjs.org/).
+
+[![Build Status](https://travis-ci.org/bfanger/angular-activerecord.png)](https://travis-ci.org/bfanger/angular-activerecord)
 
 ## Differences compared to Backbone.Model
 
-* Added static fetchOne(id) and fetchAll() methods.
-* No attributes property
-* Because the properties and methods are on the same level the ActiveRecord method & properties are prefixed with "$""
+* Added static fetchOne(id) and fetchAll() class-methods.
+* No attributes property.
+* Because the properties and methods are on the same level the ActiveRecord methods & config-properties are prefixed with "$""
 * Stripped out functionality that is provided by angular)
-  * No getter/setter methods
-  * No event system.
-  * No dependancy on underscore
-  * No dependancy on jQuery
-  * No Collection class
+  * No getter/setter methods. (Angular has $scope.$watch)
+  * No event system. (Angular has $scope.$emit)
+  * No dependancy on underscore. (angular.extend, angular.isFunction, etc)
+  * No dependancy on jQuery. (Angular has $http)
+  * No Collection class. (Angular works with plain js Array's)
 
-## Goals / Features (compared to $resource)
+## Goals / Features (compared to ngResource)
 
- * Extendable OOP designed models (instance methods per type, )
- * Enable parsing jsonData
- * Allow default values
+ * Extendable OOP designed models (instance methods per type)
+ * Enable parsing the response.
+ * Allow default values.
  * Allow alternative backends
  * Allow alternative url schemes (like .json suffixed)
- * Minimal configuration (only an urlRoot), the json-object from the rest api is the spec.
+ * Minimal configuration (only an $urlRoot), the json-object from the rest-api is the spec.
 
- ## Usage
- Add "ActiveRecord" as module dependancy.
+ ## Usage example
+
 
  ```js
- YOUR_MODULE.factory('Task', function (ActiveRecord) {
+ module('myApp', ['ActiveRecord']); // Add "ActiveRecord" as module dependancy.
+
+ module('myApp').factory('Task', function (ActiveRecord) {
 
 	return ActiveRecord.extend({
 
-		// rest api configuration for retrieving and saving tasks.
+		// Rest API configuration for retrieving and saving tasks.
 		$urlRoot: '/api/tasks',
 
-		// optional defaults
+		// Optional defaults
 		$defaults: {
-			title: '',
+			title: 'Untitled',
 			estimate: ''
 		},
 
@@ -59,4 +63,5 @@ angular-activerecord is an Backbone.Model inspired modellayer for AngularJS.
 		}
 	});
  ```
+
  The ActiveRecord methods are prefixed with "$" to prevent naming-collisions with properties from your rest api.

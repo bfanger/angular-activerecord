@@ -1,13 +1,14 @@
 {
-  "name": "angular-activerecord",
-  "version": "0.1.0",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/bfanger/angular-activerecord.git"
-  },
-  "devDependencies": {
-    "jasmine": "*",
-    "angular": "*",
-    "angular-mocks": "*"
-  }
+	"name": "angular-activerecord",
+	"description": "A Backbone.Model inspired modellayer for AngularJS",
+	"version": "0.1.0",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/bfanger/angular-activerecord.git"
+	},
+	"devDependencies": {
+		"jasmine": "*",
+		"angular": "*",
+		"angular-mocks": "*"
+	}
 }
