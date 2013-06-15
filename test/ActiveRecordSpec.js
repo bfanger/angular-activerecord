@@ -108,5 +108,4 @@ describe("ActiveRecord", function() {
 		$httpBackend.flush();
 	 });
 
-
 });

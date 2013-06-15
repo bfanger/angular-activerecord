@@ -4,6 +4,8 @@ angular-activerecord is a [Backbone.Model](http://backbonejs.org/#Model) inspire
 
 [![Build Status](https://travis-ci.org/bfanger/angular-activerecord.png)](https://travis-ci.org/bfanger/angular-activerecord)
 
+[API Documentation](http://bfanger.github.io/angular-activerecord/api/#!/api/ActiveRecord)
+
 ## Differences compared to Backbone.Model
 
 * Added static fetchOne(id) and fetchAll() class-methods.
