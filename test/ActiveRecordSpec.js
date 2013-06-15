@@ -58,15 +58,55 @@ describe("ActiveRecord", function() {
 		expect(model.last_name, 'Unknown');
 	});
 
+	var createBasicModel = function () {
+		var Model = ActiveRecord.extend({
+			$urlRoot: '/resources'
+		});
+		return new Model();
+	};
+
+	it("save", function() {
+		$httpBackend.expectPOST('/resources', '{"title":"Henry V "}').respond('{"id": 1, "title": "Henry V"}');
+		var model = createBasicModel();
+		model.$save({title : "Henry V "}).then(function (result) {
+			expect(result).toBe(model);
+			expect(model.id).toBe(1);
+			expect(model.title).toBe('Henry V');
+		});
+		$httpBackend.flush();
+	});
+
+	it("save in positional style", function() {
+		$httpBackend.expectPOST('/resources', '{"title":"Twelfth Night"}').respond('');
+		var model = createBasicModel();
+		model.$save('title', 'Twelfth Night').then(function (result) {
+			expect(result).toBe(model);
+			expect(model.title).toBe('Twelfth Night');
+		});
+		$httpBackend.flush();
+	});
+
+	it("save with non-object success response", function () {
+		$httpBackend.expectPUT('/resources/1', '{"id":1,"title":"Henry V"}').respond('');
+		var model = createBasicModel();
+		model.$save({id: 1, title: 'Henry V'}).then(function (result) {
+			expect(result).toBe(model);
+			expect(model.title).toBe('Henry V');
+		});
+		$httpBackend.flush();
+	});
+
 	it('fetchOne', function () {
 		var Model = ActiveRecord.extend({
-	 		$urlRoot: '/resources/'
+			$urlRoot: '/resources/'
 		});
-		$httpBackend.expectGET('/resources/1').respond( {id: 1, name: 'Test1'});
+		$httpBackend.expectGET('/resources/1').respond( {id: 1, name: 'Test'});
 		Model.fetchOne(1).then(function (model) {
 			expect(model.id).toBe(1);
-			expect(model.name).toBe('Test1');
+			expect(model.name).toBe('Test');
 		});
 		$httpBackend.flush();
 	 });
+
+
 });

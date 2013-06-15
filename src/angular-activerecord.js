@@ -70,7 +70,7 @@
 				var deferred = $q.defer();
 				this.$sync('read', this, options).then(function (response) {
 					var data = model.$parse(response.data, options);
-					if (typeof data === 'object') {
+					if (angular.isObject(data)) {
 						angular.extend(model, data);
 						deferred.resolve(model);
 					} else {
@@ -88,27 +88,39 @@
 			 */
 			$save: function (values, options) {
 				if (values) {
+					if (angular.isString(values)) {
+						values = {};
+						values[arguments[0]] = options;
+						options = arguments[2]
+					}
 					angular.extend(this, values);
 				}
-				if (this[this.$idAttribute]) {
-					return this.$sync('update', this, options);
-				}
+				var operation = this.$isNew() ? 'create' : 'update';
 				var model = this;
-				return this.$sync('create', this, options).then(function (response) {
-					if (angular.isObject(response.data)) {
-						angular.extend(model, model.$parse(response.data, options));
+				return this.$sync(operation, this, options).then(function (response) {
+					var data = model.$parse(response.data, options);
+					if (angular.isObject(data)) {
+						angular.extend(model, data);
 					}
 					return model;
 				});
 			},
 
 			/**
-			 * Remove the record from the backend.
+			 * Destroy this model on the server if it was already persisted.
 			 * @param {Object} [options] sync options
 			 * @return $q.promise
 			 */
 			$destroy: function (options) {
-				return this.$sync('delete', this, options);
+				var defer = $.defer();
+				if (this.$isNew()) {
+					defer.resolve();
+					return defer;
+				}
+				this.$sync('delete', this, options).then(function () {
+					defer.resolve();
+				}, defer.reject);
+				return defer;
 			},
 
 			/**
@@ -136,12 +148,10 @@
 			},
 
 			/**
-			 * The counterpart to $parse.
-			 * Don't call this method directly, this method is called by JSON.stringify.
-			 * Override it to filter or cast the properties for use in json.
+			 * A model is new if it lacks an id.
 			 */
-			toJSON: function () {
-				return this;
+			$isNew: function () {
+				return this.id == null;
 			},
 
 			/**
