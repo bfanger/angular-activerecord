@@ -58,9 +58,10 @@ describe("ActiveRecord", function() {
 		expect(model.last_name, 'Unknown');
 	});
 
-	var createBasicModel = function () {
+	var createBasicModel = function (autoConvertDates) {
 		var Model = ActiveRecord.extend({
-			$urlRoot: '/resources'
+			$urlRoot: '/resources',
+			$autoConvertDates: autoConvertDates === undefined ? false : autoConvertDates
 		});
 		return new Model();
 	};
@@ -106,6 +107,33 @@ describe("ActiveRecord", function() {
 			expect(model.name).toBe('Test');
 		});
 		$httpBackend.flush();
-	 });
+	});
+
+	it('fetchOne with date conversion', function () {
+		var Model = ActiveRecord.extend({
+			$urlRoot: '/resources/',
+			$autoConvertDates: true
+		});
+		$httpBackend.expectGET('/resources/1').respond( {id: 1, name: 'Test', date: '2013-07-30T17:59:35.220Z'});
+		Model.fetchOne(1).then(function (model) {
+			expect(model.id).toBe(1);
+			expect(model.name).toBe('Test');
+			expect(model.date).toEqual(jasmine.any(Date));
+		});
+		$httpBackend.flush();
+	});
+
+	it('save with date conversion', function () {
+		$httpBackend.expectPOST('/resources', '{"date":"2013-07-30T00:00:00.000Z","title":"Henry V"}').respond('{"id": 1, "title": "Henry V", "date": "2013-07-30T23:00:00.000Z"}');
+		var model = createBasicModel(true);
+		model.$save({date : new Date(Date.UTC(2013,6,30)), title : "Henry V"}).then(function (result) {
+			expect(result).toBe(model);
+			expect(model.id).toBe(1);
+			expect(model.title).toBe('Henry V');
+			expect(model.date).toEqual(jasmine.any(Date));
+			expect(model.date.toISOString()).toBe('2013-07-30T23:00:00.000Z');
+		});
+		$httpBackend.flush();
+	});
 
 });
