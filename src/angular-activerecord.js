@@ -149,7 +149,7 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		 * A model is new if it lacks an id.
 		 */
 		$isNew: function () {
-			return this.id == null;
+			return this[this.$idAttribute] == null;
 		},
 
 		/**
