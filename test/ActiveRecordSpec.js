@@ -84,6 +84,14 @@ describe("ActiveRecord", function() {
 		$httpBackend.flush();
 	});
 
+	it("delete", function() {
+		$httpBackend.expectDELETE('/resources/1').respond('');
+		var model = createBasicModel();
+		model.id = 1;
+		model.$destroy();
+		$httpBackend.flush();
+	});
+
 	it("save with custom id attribute", function() {
 		$httpBackend.expectPUT('/resources/1', '{"_id":1,"title":"Henry V "}').respond('{"id": 1, "title": "Henry V"}');
 		var model = createCustomIdModel();

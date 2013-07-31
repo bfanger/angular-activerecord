@@ -110,7 +110,7 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		 * @return $q.promise
 		 */
 		$destroy: function (options) {
-			var defer = $.defer();
+			var defer = $q.defer();
 			if (this.$isNew()) {
 				defer.resolve();
 				return defer;
