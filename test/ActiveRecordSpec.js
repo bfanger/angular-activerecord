@@ -88,7 +88,9 @@ describe("ActiveRecord", function() {
 		$httpBackend.expectDELETE('/resources/1').respond('');
 		var model = createBasicModel();
 		model.id = 1;
-		model.$destroy();
+		model.$destroy().then(function(){
+			// no expectations
+		});
 		$httpBackend.flush();
 	});
 

@@ -110,15 +110,15 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		 * @return $q.promise
 		 */
 		$destroy: function (options) {
-			var defer = $q.defer();
+			var deferred = $q.defer();
 			if (this.$isNew()) {
-				defer.resolve();
-				return defer;
+				deferred.resolve();
+				return deferred.promise;
 			}
 			this.$sync('delete', this, options).then(function () {
-				defer.resolve();
-			}, defer.reject);
-			return defer;
+				deferred.resolve();
+			}, deferred.reject);
+			return deferred.promise;
 		},
 
 		/**
