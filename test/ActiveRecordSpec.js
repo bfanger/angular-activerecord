@@ -65,12 +65,41 @@ describe("ActiveRecord", function() {
 		return new Model();
 	};
 
+	var createCustomIdModel = function () {
+		var Model = ActiveRecord.extend({
+			$idAttribute: '_id',
+			$urlRoot: '/resources'
+		});
+		return new Model();
+	};
+
 	it("save", function() {
 		$httpBackend.expectPOST('/resources', '{"title":"Henry V "}').respond('{"id": 1, "title": "Henry V"}');
 		var model = createBasicModel();
 		model.$save({title : "Henry V "}).then(function (result) {
 			expect(result).toBe(model);
 			expect(model.id).toBe(1);
+			expect(model.title).toBe('Henry V');
+		});
+		$httpBackend.flush();
+	});
+
+	it("delete", function() {
+		$httpBackend.expectDELETE('/resources/1').respond('');
+		var model = createBasicModel();
+		model.id = 1;
+		model.$destroy().then(function(){
+			// no expectations
+		});
+		$httpBackend.flush();
+	});
+
+	it("save with custom id attribute", function() {
+		$httpBackend.expectPUT('/resources/1', '{"_id":1,"title":"Henry V "}').respond('{"id": 1, "title": "Henry V"}');
+		var model = createCustomIdModel();
+		model.$save({_id: 1, title : "Henry V "}).then(function (result) {
+			expect(result).toBe(model);
+			expect(model._id).toBe(1);
 			expect(model.title).toBe('Henry V');
 		});
 		$httpBackend.flush();
