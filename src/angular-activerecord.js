@@ -300,7 +300,11 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 			if (angular.isArray(data)) {
 				var models = [];
 				angular.forEach(data, function (item) {
-					models.push(new ModelType(item));
+					var itemModel = new ModelType(item);
+					if (itemModel.$autoConvertDates) {
+						itemModel.$isoToDate([]);
+					}
+					models.push(itemModel);
 				});
 				deferred.resolve(models);
 			} else {
