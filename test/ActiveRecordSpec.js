@@ -1,7 +1,11 @@
 describe("ActiveRecord", function() {
 	"use strict";
 
-	beforeEach(angular.mock.module("ActiveRecord"));
+	beforeEach(function () {
+		module('ActiveRecord');
+		module('ExampleFilters');
+	});
+
 
 	var $httpBackend, ActiveRecord;
 
@@ -137,4 +141,55 @@ describe("ActiveRecord", function() {
 		$httpBackend.flush();
 	 });
 
+	it('convert properties with $readFilters', function() {
+		var Model = ActiveRecord.extend({
+			$urlRoot: '/resources/',
+			$readFilters: {
+				date: 'toDateObject'
+			}
+		});
+		$httpBackend.expectGET('/resources/1').respond({id: 1, date: '2013-07-30T17:59:35.220Z'});
+		Model.fetchOne(1).then(function(model) {
+			expect(model.id).toBe(1);
+			expect(model.date).toEqual(jasmine.any(Date));
+		});
+		$httpBackend.expectGET('/resources/').respond([{id: 1, date: '2013-07-30T17:59:35.220Z'}]);
+		Model.fetchAll().then(function(models) {
+			expect(models[0].id).toBe(1);
+			expect(models[0].date).toEqual(jasmine.any(Date));
+		});
+
+		$httpBackend.expectPUT('/resources/2', '{"id":2,"date":"2013-07-30T00:00:00.000Z"}').respond('{"id": 2, "date": "2013-07-30T00:00:00.000Z"}');
+		var model = new Model({
+			id: 2,
+			date: new Date(Date.UTC(2013, 6, 30))
+		});
+		model.$save().then(function(result) {
+			expect(result).toBe(model);
+			expect(model.date).toEqual(jasmine.any(Date));
+		});
+		$httpBackend.flush();
+	});
+
+	it('Applies $writeFilters before save', function() {
+		var Model = ActiveRecord.extend({
+			$urlRoot: '/resources/',
+			$readFilters: {
+				date: 'toDateObject'
+			},
+			$writeFilters: {
+				date: 'date:"shortDate"' // @see http://docs.angularjs.org/api/ng.filter:date
+			}
+		});
+		$httpBackend.expectPOST('/resources/', '{"date":"7/30/13"}').respond('{"id": 1, "date": "2013-07-30T00:00:00.000Z"}');
+		var model = new Model({
+			date: new Date(Date.UTC(2013, 6, 30))
+		});
+		model.$save().then(function(result) {
+			expect(result).toBe(model);
+			expect(model.date).toEqual(jasmine.any(Date));
+			expect(model.date.toISOString()).toBe('2013-07-30T00:00:00.000Z');
+		});
+		$httpBackend.flush();
+	});
 });

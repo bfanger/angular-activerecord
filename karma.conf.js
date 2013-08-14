@@ -14,6 +14,7 @@ files = [
   'bower_components/angular-mocks/angular-mocks.js',
 
   'src/**/*.js',
+  'test/ExampleFilters.js',
   'test/**/*Spec.js'
 ];
 

@@ -1,4 +1,4 @@
-angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $q) {
+angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $q, $parse) {
 	'use strict';
 
 	/**
@@ -10,6 +10,23 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		var value = object[property];
 		return angular.isFunction(value) ? value.call(object) : value;
 	};
+
+	/**
+	 * Apply the filters to the properties.
+	 *
+	 * @param {Object|null} filters The $readFilters or $writeFilters.
+	 * @param {Object} properties
+	 * @ignore
+	 */
+	var applyFilters = function (filters, properties) {
+		if (filters) {
+			angular.forEach(filters, function (filter, property) {
+				if (angular.isDefined(properties[property])) {
+					properties[property] = $parse(property + '|' + filter)(properties);
+				}
+			});
+		}
+	}
 
 	/**
 	 * @class ActiveRecord  ActiveRecord for AngularJS
@@ -48,6 +65,9 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 				if (options.parse) {
 					properties = this.$parse(properties);
 				}
+				if (options.readFilters) {
+					applyFilters(_result(this, '$readFilters'), properties);
+				}
 				angular.extend(this, properties);
 			}
 			if (options.url) {
@@ -69,6 +89,7 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 			this.$sync('read', this, options).then(function (response) {
 				var data = model.$parse(response.data, options);
 				if (angular.isObject(data)) {
+					applyFilters(_result(model, '$readFilters'), data);
 					angular.extend(model, data);
 					deferred.resolve(model);
 				} else {
@@ -89,15 +110,23 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 				if (angular.isString(values)) {
 					values = {};
 					values[arguments[0]] = options;
-					options = arguments[2]
+					options = arguments[2];
 				}
 				angular.extend(this, values);
 			}
 			var operation = this.$isNew() ? 'create' : 'update';
 			var model = this;
+			options = options || {};
+			options.data = this;
+			var filters = _result(this, '$writeFilters');
+			if (filters) {
+				options.data = angular.fromJson(angular.toJson(this));
+				applyFilters(filters, options.data)
+			}
 			return this.$sync(operation, this, options).then(function (response) {
 				var data = model.$parse(response.data, options);
 				if (angular.isObject(data)) {
+					applyFilters(_result(model, '$readFilters'), data);
 					angular.extend(model, data);
 				}
 				return model;
@@ -146,6 +175,18 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		},
 
 		/**
+		 * Preform post-processing on the properties after $parse() through angular filters.
+		 * These could be done in $parse(), but $readFilters enables a more reusable and declarative way.
+		 */
+		$readFilters: null,
+
+		/**
+		 * Preform pre-processing on the properties before $save() through angular filters.
+		 * These could be done in toJSON(), but $readFilters enables a more reusable and declarative way.
+		 */
+		$writeFilters: null,
+
+		/**
 		 * A model is new if it lacks an id.
 		 */
 		$isNew: function () {
@@ -182,9 +223,6 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		}
 		if (!options.url) {
 			options.url = _result(model, '$url');
-		}
-		if (operation === 'create' || operation === 'update') {
-			options.data = model;
 		}
 		return $http(options);
 	};
@@ -243,7 +281,9 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 			var data = model.$parse(response.data, options);
 			if (angular.isArray(data)) {
 				var models = [];
+				var filters = ModelType.prototype.$readFilters;
 				angular.forEach(data, function (item) {
+					applyFilters(filters, item);
 					models.push(new ModelType(item));
 				});
 				deferred.resolve(models);
