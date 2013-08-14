@@ -8,27 +8,27 @@ angular-activerecord is a [Backbone.Model](http://backbonejs.org/#Model) inspire
 
 ## Differences compared to Backbone.Model
 
-* Added static fetchOne(id) and fetchAll() class-methods.
 * No attributes property.
-* Because the properties and methods are on the same level the ActiveRecord methods & config-properties are prefixed with "$""
+* Because the properties and methods are on the same level the ActiveRecord methods & config-properties are prefixed with "$" to prevent naming collisions.
 * Stripped out functionality that is provided by angular)
   * No getter/setter methods. (Angular has $scope.$watch)
   * No event system. (Angular has $scope.$emit)
   * No dependancy on underscore. (angular.extend, angular.isFunction, etc)
   * No dependancy on jQuery. (Angular has $http)
-  * No Collection class. (Angular works with plain js Array's)
+  * No Collection class. (Angular works with plain javascript array's)
+* Added static fetchOne(id) and fetchAll() class-methods.
+* Added read & write filtering of properties through angular filters.
 
 ## Goals / Features (compared to ngResource)
 
  * Extendable OOP designed models (instance methods per type)
  * Enable parsing the response.
  * Allow default values.
- * Allow alternative backends
+ * Allow alternative backends.
  * Allow alternative url schemes (like .json suffixed)
  * Minimal configuration (only an $urlRoot), the json-object from the rest-api is the spec.
 
- ## Usage example
-
+ ## Example
 
  ```js
  module('myApp', ['ActiveRecord']); // Add "ActiveRecord" as module dependancy.
@@ -51,7 +51,7 @@ angular-activerecord is a [Backbone.Model](http://backbonejs.org/#Model) inspire
 			this.$initialize.apply(this, arguments)
 		},
 
-		// A method for task instances
+		// An example method for task instances
 		/**
 		 * Return the estimate in hours
 		 * @return {Number}
@@ -61,9 +61,7 @@ angular-activerecord is a [Backbone.Model](http://backbonejs.org/#Model) inspire
 			if (isNaN(value)) {
 				return 0.0;
 			}
-			return value;
+			return value / 3600;
 		}
 	});
  ```
-
- The ActiveRecord methods are prefixed with "$" to prevent naming-collisions with properties from your rest api.
