@@ -132,7 +132,6 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 			var filters = _result(this, '$writeFilters');
 			if (filters) {
 				applyFilters(filters, options.data);
-				options.data = angular.fromJson(angular.toJson(this));
 			}
 			return this.$sync(operation, this, options).then(function (response) {
 				var data = model.$parse(response.data, options);
