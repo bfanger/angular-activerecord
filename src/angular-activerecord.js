@@ -20,9 +20,12 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 	 */
 	var applyFilters = function (filters, properties) {
 		if (filters) {
-			angular.forEach(filters, function (filter, property) {
-				if (angular.isDefined(properties[property])) {
-					properties[property] = $parse(property + '|' + filter)(properties);
+			angular.forEach(filters, function (filter, path) {
+				var expression = $parse(path);
+				var value = expression(properties);
+				if (angular.isDefined(value)) {
+					var newValue = (angular.isFunction(filter)) ? filter(value) : $parse(path + '|' + filter)(properties);
+					expression.assign(properties, newValue);
 				}
 			});
 		}
@@ -117,11 +120,12 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 			var operation = this.$isNew() ? 'create' : 'update';
 			var model = this;
 			options = options || {};
-			options.data = this;
 			var filters = _result(this, '$writeFilters');
 			if (filters) {
-				options.data = angular.fromJson(angular.toJson(this));
-				applyFilters(filters, options.data)
+				options.data = angular.copy(this);
+				applyFilters(filters, options.data);
+			} else {
+				options.data = this;
 			}
 			return this.$sync(operation, this, options).then(function (response) {
 				var data = model.$parse(response.data, options);
@@ -168,10 +172,18 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		 * Process the data from the response and return the record-properties.
 		 * @param {Object} data  The data from the sync response.
 		 * @param {Object} [options] sync options
-		 * @return $q.promise
+		 * @return {Object}
 		 */
 		$parse: function (data, options) {
 			return data;
+		},
+
+		/**
+		 * Process the record-properties and return the data for the resquest. (counterpart of $parse)
+		 * Called automaticly by JSON.stringify: @link https://developer.mozilla.org/en-US/docs/JSON#toJSON()_method
+		 */
+		toJSON: function(options) {
+			return this;
 		},
 
 		/**

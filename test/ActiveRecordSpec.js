@@ -145,13 +145,21 @@ describe("ActiveRecord", function() {
 		var Model = ActiveRecord.extend({
 			$urlRoot: '/resources/',
 			$readFilters: {
-				date: 'toDateObject'
+				// basic filter via angular registered filters
+				date: 'toDateObject',
+				// filtering via a function
+				title: function (title) {
+					return title + ' Extraordinaire';
+				},
+				'address.street': 'suffix:", London"|uppercase' // Even works on nested properties and multiple filters
 			}
 		});
-		$httpBackend.expectGET('/resources/1').respond({id: 1, date: '2013-07-30T17:59:35.220Z'});
+		$httpBackend.expectGET('/resources/1').respond({id: 1, date: '2013-07-30T17:59:35.220Z', title: 'Detective', address: {street: '221B Baker street'}});
 		Model.fetchOne(1).then(function(model) {
 			expect(model.id).toBe(1);
 			expect(model.date).toEqual(jasmine.any(Date));
+			expect(model.title).toBe('Detective Extraordinaire');
+			expect(model.address.street).toBe('221B BAKER STREET, LONDON');
 		});
 		$httpBackend.expectGET('/resources/').respond([{id: 1, date: '2013-07-30T17:59:35.220Z'}]);
 		Model.fetchAll().then(function(models) {
@@ -159,14 +167,15 @@ describe("ActiveRecord", function() {
 			expect(models[0].date).toEqual(jasmine.any(Date));
 		});
 
-		$httpBackend.expectPUT('/resources/2', '{"id":2,"date":"2013-07-30T00:00:00.000Z"}').respond('{"id": 2, "date": "2013-07-30T00:00:00.000Z"}');
+		$httpBackend.expectPUT('/resources/2', '{"id":2,"date":"2013-04-10T00:00:00.000Z"}').respond('{"id": 2, "date": "2013-07-30T00:00:00.000Z"}');
 		var model = new Model({
 			id: 2,
-			date: new Date(Date.UTC(2013, 6, 30))
+			date: new Date(Date.UTC(2013, 3, 10))
 		});
 		model.$save().then(function(result) {
 			expect(result).toBe(model);
 			expect(model.date).toEqual(jasmine.any(Date));
+			expect(model.date.toISOString()).toBe('2013-07-30T00:00:00.000Z'); // the date from response is converted via the filter
 		});
 		$httpBackend.flush();
 	});
@@ -174,21 +183,21 @@ describe("ActiveRecord", function() {
 	it('Applies $writeFilters before save', function() {
 		var Model = ActiveRecord.extend({
 			$urlRoot: '/resources/',
-			$readFilters: {
-				date: 'toDateObject'
-			},
 			$writeFilters: {
 				date: 'date:"shortDate"' // @see http://docs.angularjs.org/api/ng.filter:date
 			}
 		});
-		$httpBackend.expectPOST('/resources/', '{"date":"7/30/13"}').respond('{"id": 1, "date": "2013-07-30T00:00:00.000Z"}');
+		$httpBackend.expectPOST('/resources/', '{"date":"7/30/13"}').respond('{"id": 1}');
 		var model = new Model({
 			date: new Date(Date.UTC(2013, 6, 30))
 		});
+		model.date.$special = 'remember me';
 		model.$save().then(function(result) {
 			expect(result).toBe(model);
+			// No `date` in response so the model.date should be the same object as before.
 			expect(model.date).toEqual(jasmine.any(Date));
 			expect(model.date.toISOString()).toBe('2013-07-30T00:00:00.000Z');
+			expect(model.date.$special).toBe('remember me');
 		});
 		$httpBackend.flush();
 	});

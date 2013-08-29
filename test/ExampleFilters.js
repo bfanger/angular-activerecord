@@ -18,4 +18,8 @@ angular.module('ExampleFilters', ['ng'])
 			 return value.toISOString();
 		 }
 		 return value;
+	}).filter('suffix', function() {
+		return function(value, suffix) {
+			return value + suffix;
+		}
 	});
