@@ -178,7 +178,7 @@ describe("ActiveRecord", function() {
 				date: 'toDateObject'
 			},
 			$writeFilters: {
-				date: 'date:"shortDate"' // @see http://docs.angularjs.org/api/ng.filter:date
+				date: ['date', 'shortDate'] // @see http://docs.angularjs.org/api/ng.filter:date
 			}
 		});
 		$httpBackend.expectPOST('/resources/', '{"date":"7/30/13"}').respond('{"id": 1, "date": "2013-07-30T00:00:00.000Z"}');

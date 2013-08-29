@@ -1,4 +1,4 @@
-angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $q, $parse) {
+angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $q, $filter) {
 	'use strict';
 
 	/**
@@ -22,7 +22,13 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		if (filters) {
 			angular.forEach(filters, function (filter, property) {
 				if (angular.isDefined(properties[property])) {
-					properties[property] = $parse(property + '|' + filter)(properties);
+					var args = [properties[property]];
+					if (typeof filter === 'object') {
+						filter.length > 1 && Array.prototype.push.apply(args, filter.slice(1));
+						filter = filter[0];
+					}
+
+					properties[property] = $filter(filter).apply(properties, args);
 				}
 			});
 		}
