@@ -178,7 +178,31 @@ describe("ActiveRecord", function() {
 				date: 'toDateObject'
 			},
 			$writeFilters: {
-				date: 'date:"shortDate"' // @see http://docs.angularjs.org/api/ng.filter:date
+				date: ['date', 'shortDate'] // @see http://docs.angularjs.org/api/ng.filter:date
+			}
+		});
+		$httpBackend.expectPOST('/resources/', '{"date":"7/30/13"}').respond('{"id": 1, "date": "2013-07-30T00:00:00.000Z"}');
+		var model = new Model({
+			date: new Date(Date.UTC(2013, 6, 30))
+		});
+		model.$save().then(function(result) {
+			expect(result).toBe(model);
+			expect(model.date).toEqual(jasmine.any(Date));
+			expect(model.date.toISOString()).toBe('2013-07-30T00:00:00.000Z');
+		});
+		$httpBackend.flush();
+	});
+
+	it('Applies $writeFilters with custom callback before save', function() {
+		var Model = ActiveRecord.extend({
+			$urlRoot: '/resources/',
+			$readFilters: {
+				date: 'toDateObject'
+			},
+			$writeFilters: {
+				date: function(date){
+					return (date.getMonth() + 1) + '/' + date.getDate() + '/' + (date.getFullYear() - 2000);
+				}
 			}
 		});
 		$httpBackend.expectPOST('/resources/', '{"date":"7/30/13"}').respond('{"id": 1, "date": "2013-07-30T00:00:00.000Z"}');

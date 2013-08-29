@@ -1,4 +1,4 @@
-angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $q, $parse) {
+angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $q, $filter) {
 	'use strict';
 
 	/**
@@ -22,7 +22,18 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		if (filters) {
 			angular.forEach(filters, function (filter, property) {
 				if (angular.isDefined(properties[property])) {
-					properties[property] = $parse(property + '|' + filter)(properties);
+					if (typeof filter === 'function') {
+						properties[property] = filter.call(properties, properties[property]);
+						return;
+					}
+
+					var args = [properties[property]];
+					if (typeof filter === 'object' && filter.length > 0) {
+						filter.length > 1 && Array.prototype.push.apply(args, filter.slice(1));
+						filter = filter[0];
+					}
+
+					properties[property] = $filter(filter).apply(properties, args);
 				}
 			});
 		}
@@ -120,8 +131,7 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 			options.data = this;
 			var filters = _result(this, '$writeFilters');
 			if (filters) {
-				options.data = angular.fromJson(angular.toJson(this));
-				applyFilters(filters, options.data)
+				applyFilters(filters, options.data);
 			}
 			return this.$sync(operation, this, options).then(function (response) {
 				var data = model.$parse(response.data, options);
