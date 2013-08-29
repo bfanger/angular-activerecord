@@ -22,8 +22,13 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		if (filters) {
 			angular.forEach(filters, function (filter, property) {
 				if (angular.isDefined(properties[property])) {
+					if (typeof filter === 'function') {
+						properties[property] = filter.call(properties, properties[property]);
+						return;
+					}
+
 					var args = [properties[property]];
-					if (typeof filter === 'object') {
+					if (typeof filter === 'object' && filter.length > 0) {
 						filter.length > 1 && Array.prototype.push.apply(args, filter.slice(1));
 						filter = filter[0];
 					}
@@ -126,8 +131,8 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 			options.data = this;
 			var filters = _result(this, '$writeFilters');
 			if (filters) {
+				applyFilters(filters, options.data);
 				options.data = angular.fromJson(angular.toJson(this));
-				applyFilters(filters, options.data)
 			}
 			return this.$sync(operation, this, options).then(function (response) {
 				var data = model.$parse(response.data, options);
