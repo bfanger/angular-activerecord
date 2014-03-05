@@ -1,12 +1,19 @@
-angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $q, $parse) {
+/**
+ * @licence ActiveRecord for AngularJS
+ * (c) 2013-2014 Bob Fanger, Jeremy Ashkenas, DocumentCloud
+ * License: MIT
+ */
+angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$parse', function($http, $q, $parse) {
 	'use strict';
 
 	/**
 	 * If the value of the named property is a function then invoke it; otherwise, return it.
+	 * @param {Object} object
+	 * @param {String} property
 	 * @ignore
 	 */
 	var _result = function (object, property) {
-		 if (object == null) return null;
+		if (object == null) return null;
 		var value = object[property];
 		return angular.isFunction(value) ? value.call(object) : value;
 	};
@@ -29,7 +36,7 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 				}
 			});
 		}
-	}
+	};
 
 	/**
 	 * @class ActiveRecord  ActiveRecord for AngularJS
@@ -156,6 +163,7 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 
 		/**
 		 * Generate the url for the $save, $fetch and $destroy methods.
+		 * @return {String} url
 		 */
 		$url: function() {
 			var urlRoot = _result(this, '$urlRoot');
@@ -182,17 +190,19 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		 * Process the record-properties and return the data for the resquest. (counterpart of $parse)
 		 * Called automaticly by JSON.stringify: @link https://developer.mozilla.org/en-US/docs/JSON#toJSON()_method
 		 */
-		toJSON: function(options) {
+		toJSON: function() {
 			return this;
 		},
 
 		/**
+		 * @property {Object} $readFilters
 		 * Preform post-processing on the properties after $parse() through angular filters.
 		 * These could be done in $parse(), but $readFilters enables a more reusable and declarative way.
 		 */
 		$readFilters: null,
 
 		/**
+		 * @property {Object} $writeFilters
 		 * Preform pre-processing on the properties before $save() through angular filters.
 		 * These could be done in toJSON(), but $readFilters enables a more reusable and declarative way.
 		 */
@@ -208,6 +218,10 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		/**
 		 * By default calls ActiveRecord.sync
 		 * Override to change the backend implementation on a per model bases.
+		 * @param {String} operation  "create", "read","update" or "delete"
+		 * @param {ActiveRecord} model
+		 * @param {Object} options
+		 * @return $q.promise
 		 */
 		$sync: function (operation, model, options) {
 			return ActiveRecord.sync.apply(this, arguments);
@@ -218,6 +232,9 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 	 * Preform a CRUD operation on the backend.
 	 *
 	 * @static
+	 * @param {String} operation  "create", "read","update" or "delete"
+	 * @param {ActiveRecord} model
+	 * @param {Object} options
 	 * @return $q.promise
 	 */
 	ActiveRecord.sync = function (operation, model, options) {
@@ -242,6 +259,8 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 	/**
 	 * Create a subclass.
 	 * @static
+	 * @param {Object} protoProps
+	 * @param {Object} [staticProps]
 	 * @return {Function} Constructor
 	 */
 	ActiveRecord.extend = function(protoProps, staticProps) {
@@ -306,4 +325,4 @@ angular.module('ActiveRecord', ['ng']).factory('ActiveRecord', function($http, $
 		return deferred.promise;
 	};
 	return ActiveRecord;
-});
+}]);

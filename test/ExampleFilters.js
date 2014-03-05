@@ -1,31 +1,40 @@
 angular.module('ExampleFilters', ['ng'])
 	/**
-	 * Converts string containing a (ISO8601 formatted) date into a Date object.
+	 * Converts string containing a (ISO8601 Extended format) date into a Date object.
 	 * @returns {Date}
 	 */
 	.filter('toDateObject', function() {
-		var fromIsoString = (function(){
-			var tzoffset = (new Date).getTimezoneOffset();
-			function fastDateParse(y, m, d, h, i, s, ms){ // this -> tz
-				return new Date(y, m - 1, d, h || 0, +(i || 0) - this, s || 0, ms || 0);
-			}
+		function parseISO8601(str) {
+			var parts = str.split('T');
+			var dateParts = parts[0].split('-');
+			var timeParts = parts[1].split('Z');
+			var timeSubParts = timeParts[0].split(':');
+			var timeSecParts = timeSubParts[2].split('.');
+			var timeHours = Number(timeSubParts[0]);
+			var date = new Date();
 
-			// result function
-			return function(isoDateString){
-				var tz = isoDateString.substr(10).match(/([\-\+])(\d{1,2}):?(\d{1,2})?/) || 0;
-				if (tz) {
-					tz = tzoffset + (tz[1] == '-' ? -1 : 1) * (tz[3] != null ? +tz[2] * 60 + (+tz[3]) : +tz[2]);
-				} else {
-					tz = tzoffset;
-				}
-				return fastDateParse.apply(tz || 0, isoDateString.split(/\D/));
+			date.setUTCFullYear(Number(dateParts[0]));
+			date.setUTCMonth(Number(dateParts[1])-1);
+			date.setUTCDate(Number(dateParts[2]));
+			date.setUTCHours(Number(timeHours));
+			date.setUTCMinutes(Number(timeSubParts[1]));
+			date.setUTCSeconds(Number(timeSecParts[0]));
+			if (timeSecParts[1]) {
+				date.setUTCMilliseconds(Number(timeSecParts[1]));
 			}
-		})();
-
+			return date;
+		}
 		return function(value) {
 			if (typeof value === 'string') {
-				var match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)(?:([\+-])(\d{2})\:(\d{2}))?Z?$/.exec(value);
-				return match ? fromIsoString(value) : value;
+				if (value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)(?:([\+-])(\d{2})\:(\d{2}))?Z?$/) === null) {
+					console.warn(value, ' is not a valid ISO8601 date');
+					return value;
+				}
+				var date = new Date(value);
+				if (isNaN(date)) { // ES3 doensn't parse ISO8601
+					return parseISO8601(value);
+				}
+				return date;
 			}
 			return value;
 		};
@@ -37,5 +46,5 @@ angular.module('ExampleFilters', ['ng'])
 	}).filter('suffix', function() {
 		return function(value, suffix) {
 			return value + suffix;
-		}
+		};
 	});
