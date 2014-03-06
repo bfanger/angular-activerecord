@@ -11,12 +11,5 @@
 		"jasmine": "*",
 		"angular": "*",
 		"angular-mocks": "*"
-	},
-	"ignore": [
-		"**/.*",
-		"test",
-		"karma.conf.js",
-		"package.json",
-		"bower.json"
-	]
+	}
 }
