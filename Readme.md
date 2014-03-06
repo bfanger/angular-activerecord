@@ -25,11 +25,12 @@ angular-activerecord is a [Backbone.Model](http://backbonejs.org/#Model) inspire
  * Enable parsing the response.
  * Allow default values.
  * Allow alternative backends.
- * Allow alternative url schemes (like .json suffixed)
+ * Allow alternative url schemes (like a .json suffix)
  * Minimal configuration (only a $urlRoot), the json-object from the rest-api is the spec.
 
- ## Example
+## Examples
 
+### Defining a model
  ```js
  module('myApp', ['ActiveRecord']); // Add "ActiveRecord" as module dependency.
 
@@ -65,3 +66,58 @@ angular-activerecord is a [Backbone.Model](http://backbonejs.org/#Model) inspire
 		}
 	});
  ```
+
+### Fetching and saving data.
+```
+module('myApp').controller('TaskCtrl', function ($scope, Task, $document) {
+
+	Task.fetchOne(7).then(function (task7) { // Fetches '/api/tasks/7'
+		$scope.task = task7;
+		$document.title = task7.title  + ' - MyApp';
+	});
+
+	/**
+	 * @param {Task} task
+	 */
+	$scope.saveTask = function (task) {
+		$scope.spinnerVisible = true;
+		task.$save().then(function () {
+			$scope.successVisible = true;
+		}).catch(function (error) {
+			$scope.error = error;
+		}).finally(function () {
+			$scope.spinnerVisible = false;
+		});
+	};
+});
+```
+
+### Loading models via ngRoute
+
+```
+module('myApp', ['ngRoute']).config(function ($routeProvider) {
+	$routeProvider
+		.when('/tasks', {
+			templateUrl: 'tasks.html',
+			controller: 'TaskListCtrl',
+			resolve: {
+				tasks: function (Task) {
+					return Task.fetchAll();
+				}
+			}
+		})
+		.when('/tasks/:taskId', {
+			templateUrl: 'task.html',
+			controller: 'TaskCtrl',
+			resolve: {
+				task: function ($routeParams, Task) {
+					return Task.fetchOne($routeParams.taskId);
+				}
+			}
+		});
+});
+
+module('myApp').controller('TaskCtrl', function ($scope, task) {
+	$scope.task = task;
+});
+```
