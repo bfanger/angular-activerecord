@@ -69,13 +69,52 @@ describe("ActiveRecord", function() {
 		return new Model();
 	};
 
-	var createCustomIdModel = function () {
-		var Model = ActiveRecord.extend({
-			$idAttribute: '_id',
-			$urlRoot: '/resources'
-		});
-		return new Model();
-	};
+	it("change, hasChanged, changedAttributes, previous, previousAttributes", function() {
+		var model = new ActiveRecord({name: "Tim", age: 10});
+		expect(model.$changedAttributes()).toEqual({});
+		expect(model.$hasChanged()).toBe(false);
+		model.name = 'Rob';
+		expect(model.$hasChanged('name')).toBe(true, 'name changed');
+		expect(model.$hasChanged('age')).toBe(false, 'age did not');
+		expect(model.$changedAttributes()).toEqual({name: 'Rob'}, 'changedAttributes returns the changed properties');
+		expect(model.$previous('name')).toBe('Tim');
+		expect(model.$previousAttributes()).toEqual({name: "Tim", age: 10}, 'previousAttributes is correct');
+	});
+
+	it("changedAttributes", function() {
+		var model = new ActiveRecord({a: 'a', b: 'b'});
+		expect(model.$changedAttributes()).toEqual({});
+		expect(model.$changedAttributes({a: 'a'})).toEqual({});
+		expect(model.$changedAttributes({a: 'b'})).toEqual({a: 'b'});
+	});
+
+	it("previousAttributes are syched with fetch", function () {
+		var model = createBasicModel();
+		expect(model.$previousAttributes()).toEqual({});
+		model.id = 1;
+		$httpBackend.expectGET('/resources/1').respond('{"id": 1, "title": "Fetched"}');
+		model.$fetch();
+		$httpBackend.flush();
+		expect(model.$previousAttributes()).toEqual({id: 1, title: "Fetched"});
+		model.title = 'Changed';
+		expect(model.$changedAttributes()).toEqual({title: 'Changed'});
+		expect(model.$previous('title')).toBe('Fetched');
+	});
+
+	it("previousAttributes are syched with save", function () {
+		var model = createBasicModel();
+		model.id = 1;
+		model.title = 'Saving';
+
+		expect(model.$previousAttributes()).toEqual({});
+		$httpBackend.expectPUT('/resources/1').respond('{"id": 1, "title": "Saved"}');
+		model.$save();
+		$httpBackend.flush();
+		expect(model.$previousAttributes()).toEqual({id: 1, title: "Saved"});
+		model.title = 'Changed';
+		expect(model.$changedAttributes()).toEqual({title: 'Changed'});
+		expect(model.$previous('title')).toBe('Saved');
+	});
 
 	it("save", function() {
 		$httpBackend.expectPOST('/resources', '{"title":"Henry V "}').respond('{"id": 1, "title": "Henry V"}');
@@ -100,7 +139,11 @@ describe("ActiveRecord", function() {
 
 	it("save with custom id attribute", function() {
 		$httpBackend.expectPUT('/resources/1', '{"_id":1,"title":"Henry V "}').respond('{"id": 1, "title": "Henry V"}');
-		var model = createCustomIdModel();
+		var CustomIdModel = ActiveRecord.extend({
+			$idAttribute: '_id',
+			$urlRoot: '/resources'
+		});
+		var model = new CustomIdModel();
 		model.$save({_id: 1, title : "Henry V "}).then(function (result) {
 			expect(result).toBe(model);
 			expect(model._id).toBe(1);
@@ -201,4 +244,5 @@ describe("ActiveRecord", function() {
 		});
 		$httpBackend.flush();
 	});
+
 });

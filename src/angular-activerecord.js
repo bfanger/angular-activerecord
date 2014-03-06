@@ -79,6 +79,9 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 					applyFilters(_result(this, '$readFilters'), properties);
 				}
 				angular.extend(this, properties);
+				this.$previousAttributes = function () {
+					return properties;
+				};
 			}
 			if (options.url) {
 				this.$url = options.url;
@@ -86,6 +89,72 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 			if (options.urlRoot) {
 				this.$urlRoot = options.urlRoot;
 			}
+		},
+
+		/**
+		 * Determine if the model has changed since the last sync (fetch/load).
+         *
+		 * @param {String} [property] Determine if that specific property has changed.
+		 * @returns {Boolean}
+		 */
+		$hasChanged: function (property) {
+			var changed = this.$changedAttributes();
+			if (property) {
+				return property in changed;
+			}
+			for (var i in changed) {
+				return true;
+			}
+			return false;
+		},
+
+		/**
+		 * Return an object containing all the properties that have changed.
+		 * Removed properties will be set to undefined.
+		 *
+		 * @param {Object} [diff] An object to diff against, determining if there would be a change.
+		 * @returns {Object}
+		 */
+		$changedAttributes: function (diff) {
+			var current = diff || this; // By default diff against the current values
+			var changed = {};
+			var previousAttributes = this.$previousAttributes();
+			if (!diff) { // Skip removed properties (only compare the properties in the diff object)
+				for (var property in previousAttributes) {
+					if (typeof current[property] === 'undefined') {
+						changed[property] = current[property];
+					}
+				}
+			}
+			for (var property in current) {
+				if (current.hasOwnProperty(property)) {
+					var value = current[property];
+					if (typeof value !== 'function' && angular.equals(value, previousAttributes[property]) === false) {
+						changed[property] = value;
+					}
+				}
+			}
+			return changed;
+		},
+
+		/**
+		 * Get the previous value of a property.
+		 * @param {String} [property]
+		 */
+		$previous: function (property) {
+			var previousAttributes = this.$previousAttributes();
+			if (property == null || !previousAttributes) {
+				return null;
+			}
+			return previousAttributes[property];
+		},
+
+		/**
+		 * Get all of the properties of the model at the time of the previous sync (fetch/save).
+		 * @returns {Object}
+		 */
+		$previousAttributes: function () {
+			return {};
 		},
 
 		/**
@@ -101,6 +170,9 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 				if (angular.isObject(data)) {
 					applyFilters(_result(model, '$readFilters'), data);
 					angular.extend(model, data);
+					model.$previousAttributes = function () {
+						return data;
+					};
 					deferred.resolve(model);
 				} else {
 					deferred.reject('Not a valid response type');
@@ -139,6 +211,9 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 				if (angular.isObject(data)) {
 					applyFilters(_result(model, '$readFilters'), data);
 					angular.extend(model, data);
+					model.$previousAttributes = function () {
+						return data;
+					};
 				}
 				return model;
 			});
@@ -218,7 +293,7 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 		/**
 		 * By default calls ActiveRecord.sync
 		 * Override to change the backend implementation on a per model bases.
-		 * @param {String} operation  "create", "read","update" or "delete"
+		 * @param {String} operation  "create", "read", "update" or "delete"
 		 * @param {ActiveRecord} model
 		 * @param {Object} options
 		 * @return $q.promise
@@ -232,7 +307,7 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 	 * Preform a CRUD operation on the backend.
 	 *
 	 * @static
-	 * @param {String} operation  "create", "read","update" or "delete"
+	 * @param {String} operation  "create", "read", "update" or "delete"
 	 * @param {ActiveRecord} model
 	 * @param {Object} options
 	 * @return $q.promise
