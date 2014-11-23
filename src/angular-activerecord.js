@@ -1,4 +1,4 @@
-/**
+/*!
  * @licence ActiveRecord for AngularJS
  * (c) 2013-2014 Bob Fanger, Jeremy Ashkenas, DocumentCloud
  * License: MIT

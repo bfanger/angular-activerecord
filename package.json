@@ -1,6 +1,6 @@
 {
   "name": "angular-activerecord",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A Backbone.Model inspired modellayer for AngularJS",
   "main": "src/angular-activerecord.js",
   "repository": {
