@@ -68,7 +68,7 @@ angular-activerecord is a [Backbone.Model](http://backbonejs.org/#Model) inspire
  ```
 
 ### Fetching and saving data.
-```
+```js
 module('myApp').controller('TaskCtrl', function ($scope, Task, $document) {
 
 	Task.fetchOne(7).then(function (task7) { // Fetches '/api/tasks/7'
@@ -94,7 +94,7 @@ module('myApp').controller('TaskCtrl', function ($scope, Task, $document) {
 
 ### Loading models via ngRoute
 
-```
+```js
 module('myApp', ['ngRoute']).config(function ($routeProvider) {
 	$routeProvider
 		.when('/tasks', {
