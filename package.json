@@ -13,9 +13,11 @@
   "readmeFilename": "Readme.md",
   "dependencies": {},
   "devDependencies": {
-    "karma": "^0.12.1",
-    "karma-chrome-launcher": "^0.1.2",
-    "karma-jasmine": "^0.1.5",
-    "karma-phantomjs-launcher": "^0.1.2"
+    "jasmine-core": "^2.3.4",
+    "karma": "^0.13.11",
+    "karma-chrome-launcher": "^0.2.1",
+    "karma-jasmine": "^0.3.6",
+    "karma-phantomjs-launcher": "^0.2.1",
+    "phantomjs": "^1.9.18"
   }
 }
