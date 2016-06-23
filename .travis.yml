@@ -1,9 +1,5 @@
 language: node_js
 node_js:
-  - 4
-
-before_script:
-  - npm install -g bower
-  - bower install
+  - 5
 
 sudo: false
