@@ -96,13 +96,13 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 			var instance = this;
 			var relations = {};
 			angular.forEach(_result(this, '$relations'), function (def, relation) {
-				var key = def.key||relation;
-				relations[relation] = angular.isObject(instance[key]) && !angular.isArray(instance[key]) ?
-					new def.model(instance[key]) :
+				var prop = def.prop||relation;
+				relations[relation] = angular.isObject(instance[prop]) && !angular.isArray(instance[prop]) ?
+					new def.model(instance[prop]) :
 					[];
 
 				if (angular.isArray(relations[relation])) {
-					angular.forEach(instance[key], function (object) {
+					angular.forEach(instance[prop], function (object) {
 						relations[relation].push(new def.model(object));
 					});
 				}
