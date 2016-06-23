@@ -8,16 +8,17 @@
     "url": "git://github.com/bfanger/angular-activerecord.git"
   },
   "scripts": {
-    "test": "./node_modules/karma/bin/karma start --single-run --browsers PhantomJS"
+    "setup": "npm install",
+    "test": "./node_modules/.bin/karma start --single-run --browsers PhantomJS"
   },
-  "readmeFilename": "Readme.md",
-  "dependencies": {},
   "devDependencies": {
-    "jasmine-core": "^2.3.4",
-    "karma": "^0.13.11",
-    "karma-chrome-launcher": "^0.2.1",
-    "karma-jasmine": "^0.3.6",
-    "karma-phantomjs-launcher": "^0.2.1",
-    "phantomjs": "^1.9.18"
+    "angular": "^1.5.7",
+    "angular-mocks": "^1.5.7",
+    "jasmine-core": "^2.4.1",
+    "karma": "^0.13.22",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-jasmine": "^1.0.2",
+    "karma-phantomjs-launcher": "^1.0.0",
+    "phantomjs-prebuilt": "^2.1.7"
   }
 }
