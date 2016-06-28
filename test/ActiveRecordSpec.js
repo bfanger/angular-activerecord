@@ -127,6 +127,99 @@ describe("ActiveRecord", function() {
 		$httpBackend.flush();
 	});
 
+	it("save with validation success", function() {
+		$httpBackend.expectPOST('/resources', '{"number":8,"title":"Henry V"}').respond('{"number":8,"title":"Henry V"}');
+		var Model = ActiveRecord.extend({
+			$urlRoot: '/resources',
+
+			$min: function(fieldValue, validationValue) {
+				fieldValue = parseInt(fieldValue, 10);
+				validationValue = parseInt(validationValue, 10);
+				return fieldValue >= validationValue;
+			},
+
+			$validations: {
+				number: {min: 5},
+				title: {required: true},
+			}
+		});
+		var model = new Model();
+		model.number = 8;
+		model.title = "Henry V";
+		model.$save().then(function(result) {
+			expect(result).toBe(model);
+			expect(model.number).toBe(8);
+			expect(model.title).toBe('Henry V');
+			expect(model.$isValid()).toBe(true);
+		});
+		$httpBackend.flush();
+	});
+
+	it("save with validation failed", function() {
+		var Model = ActiveRecord.extend({
+			$urlRoot: '/resources',
+
+			$min: function(fieldValue, validationValue) {
+				fieldValue = parseInt(fieldValue, 10);
+				validationValue = parseInt(validationValue, 10);
+				return fieldValue >= validationValue;
+			},
+
+			$validations: {
+				number: {min: 5},
+				name: {required: true},
+				anOtherNumber: {min: 5}
+			}
+		});
+		var model = new Model();
+		model.number = 3;
+		model.$save().catch(function(err) {
+			expect(Object.keys(err).length).toBe(2);
+			expect(err.number[0]).toBe("is invalid");
+			expect(err.name[0]).toBe("is required");
+			expect(model.$isValid()).toBe(false);
+		});
+	});
+
+	it("save with validation failed and custom messages", function() {
+		var Model = ActiveRecord.extend({
+			$urlRoot: '/resources',
+
+			$min: function(fieldValue, validationValue) {
+				fieldValue = parseInt(fieldValue, 10);
+				validationValue = parseInt(validationValue, 10);
+				return fieldValue >= validationValue;
+			},
+
+			$validationErrorMessages: {
+	      min: "invalid1",
+	      required: "required1"
+	    },
+
+			$validations: {
+				invalidField1: {min: 5},
+				invalidField2: {min: {value: 5, message: "invalid2"}},
+				invalidField3: {min: {value: 5, message: function() { return "invalid3"}}},
+				requiredField1: {required: true},
+				requiredField2: {required: {message: "required2"}},
+				requiredField3: {required: {message: function() {return "required3"}}}
+			}
+		});
+		var model = new Model();
+		model.invalidField1 = 3;
+		model.invalidField2 = 3;
+		model.invalidField3 = 3;
+		model.$save().catch(function(err) {
+			expect(err.invalidField1[0]).toBe("invalid1");
+			expect(err.invalidField2[0]).toBe("invalid2");
+			expect(err.invalidField3[0]).toBe("invalid3");
+			expect(err.requiredField1[0]).toBe("required1");
+			expect(err.requiredField2[0]).toBe("required2");
+			expect(err.requiredField3[0]).toBe("required3");
+			expect(model.$isValid()).toBe(false);
+		});
+	});
+
 	it("delete", function() {
 		$httpBackend.expectDELETE('/resources/1').respond('');
 		var model = createBasicModel();
