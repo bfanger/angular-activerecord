@@ -89,6 +89,26 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 			if (options.urlRoot) {
 				this.$urlRoot = options.urlRoot;
 			}
+
+			/*
+			 * Set the declared relations on the model
+			 */
+			var instance = this;
+			var relations = {};
+			angular.forEach(_result(this, '$relations'), function (def, relation) {
+				var prop = def.prop||relation;
+				relations[relation] = angular.isObject(instance[prop]) && !angular.isArray(instance[prop]) ?
+					new def.model(instance[prop]) :
+					[];
+
+				if (angular.isArray(relations[relation])) {
+					angular.forEach(instance[prop], function (object) {
+						relations[relation].push(new def.model(object));
+					});
+				}
+			});
+
+			angular.extend(this, relations);
 		},
 
 		/**

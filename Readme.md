@@ -67,6 +67,71 @@ angular-activerecord is a [Backbone.Model](http://backbonejs.org/#Model) inspire
 	});
  ```
 
+### Defining Relations (Single-loaded from server)
+This section is for single loaded nested data. If one of the property of a model is another relational model, it can be declared in `$relations` property. 
+
+In the example below, there is an array property named `comments`, and each comment object will be automatically an instance of the `Comment` model. This also works for object properties.
+
+Sample Nested Object of a Task model:
+```js
+var dataFromServer = {
+	id: 1,
+	name: "Learn ActiveRecord",
+	comments: [
+		{
+			id: 1,
+			text: "Woow! Cool!"
+		},{
+			id: 2,
+			text: "Awesome!"
+		}
+	]
+};
+
+var task = new Task(dataFromServer);
+console.log(task.comments); // array of Comment models
+```
+Models:
+```js
+app.factory('Task', function (ActiveRecord, Comment) {
+
+	return ActiveRecord.extend({
+		// ...some codes before
+		$relations: {
+			comments: {
+				model: Comment
+			}
+		}
+	});
+});
+
+app.factory('Comment', function (ActiveRecord, Comment) {
+	return ActiveRecord.extend({
+		// ...some codes 
+	});
+});
+```
+
+You can also rename the relation property instead of `comments`. 
+
+```js
+app.factory('Task', function (ActiveRecord, Comment) {
+
+	return ActiveRecord.extend({
+		// ...some codes before
+		$relations: {
+			coolComments: {
+				model: Comment,
+				prop: comments
+			}
+		}
+	});
+});
+
+// This relation is now accessible via
+console.log(Task.coolComments); // array of Comment models
+```
+
 ### Fetching and saving data.
 ```js
 module('myApp').controller('TaskCtrl', function ($scope, Task, $document) {
