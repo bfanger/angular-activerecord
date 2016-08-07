@@ -93,7 +93,7 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 
 		/**
 		 * Determine if the model has changed since the last sync (fetch/load).
-         *
+		 *
 		 * @param {String} [property] Determine if that specific property has changed.
 		 * @returns {Boolean}
 		 */
@@ -182,6 +182,11 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 		},
 
 		/**
+		 * Perform logic before $save method
+		 */
+		$beforeSave: null,
+
+		/**
 		 * Save the record to the backend.
 		 * @param {Object} [values] Set these values before saving the record.
 		 * @param {Object} [options] sync options
@@ -196,6 +201,7 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 				}
 				angular.extend(this, values);
 			}
+
 			var operation = this.$isNew() ? 'create' : 'update';
 			var model = this;
 			options = options || {};
@@ -204,9 +210,17 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 				options.data = angular.copy(this);
 				applyFilters(filters, options.data);
 			} else {
-				options.data = this;
+				options.data = angular.copy(this);
 			}
-			return this.$sync(operation, this, options).then(function (response) {
+
+			if(this.$beforeSave) {
+				options.data = this.$beforeSave(options.data);
+			}
+			if(this.$afterSave) {
+				var afterSave = this.$afterSave;
+			}
+
+			return this.$sync(operation, this, options).success(function (response, status) {
 				var data = model.$parse(response.data, options);
 				if (angular.isObject(data)) {
 					applyFilters(_result(model, '$readFilters'), data);
@@ -215,7 +229,11 @@ angular.module('ActiveRecord', []).factory('ActiveRecord', ['$http', '$q', '$par
 						return data;
 					};
 				}
+				if(afterSave) afterSave(response, status);
+
 				return model;
+			}).error(function (response, status) {
+				if(afterSave) afterSave(response, status);
 			});
 		},
 
